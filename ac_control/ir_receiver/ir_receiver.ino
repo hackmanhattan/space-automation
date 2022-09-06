@@ -9,11 +9,13 @@ IRrecv irrecv(RECV_PIN);
 
 decode_results results;
 int c = 1;
-
+      unsigned long timeBegin;
 void setup()
 {
   Serial.begin(9600);
   irrecv.enableIRIn(); // Start the receiver
+  timeBegin = micros();
+
 }
 
 void loop() {
@@ -27,9 +29,14 @@ void loop() {
     Serial.println(results.rawlen);
     Serial.print("decode type ");
     Serial.println(results.decode_type);
-    if(results.value==0xA1026EFF) {
-      Serial.println("turning off");
-    }
+
+    unsigned long timeEnd = micros();
+    unsigned long duration = timeEnd - timeBegin;
+    double averageDuration = (double)duration / 1000.0;
+    Serial.println(averageDuration);
+//    if(results.value==0xA1026EFF) {
+//      Serial.println("turning off");
+//    }
     irrecv.resume(); // Receive the next value
 
   }

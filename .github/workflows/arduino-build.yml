@@ -1,0 +1,38 @@
+name: Arduino Build CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        sketch:
+          - path: ac_control/ir_sender
+            name: ir_sender
+          - path: ac_control/ir_receiver
+            name: ir_receiver
+        profile:
+          - uno
+          - esp8266
+          - esp32
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
+
+    - name: Compile sketch with profile ${{ matrix.profile }}
+      run: |
+        arduino-cli compile --profile ${{ matrix.profile }} ${{ matrix.sketch.path }}
+
+    - name: Build summary
+      run: |
+        echo "✅ Successfully built ${{ matrix.sketch.name }} for profile ${{ matrix.profile }}"

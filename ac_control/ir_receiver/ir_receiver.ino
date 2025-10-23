@@ -1,6 +1,6 @@
 #define sprint Serial.print
 #define sprintln Serial.println
-#include <IRremote.hpp> // IRremote 4.1.2 from Library Manager
+#include <IRremote.hpp> // IRremote 4.4.1 from Library Manager
 
 int RECV_PIN = 11;
 unsigned long timeBegin;

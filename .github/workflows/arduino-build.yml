@@ -46,7 +46,7 @@ jobs:
 
     - name: Install IRremote library
       run: |
-        arduino-cli lib install "IRremote@4.1.2"
+        arduino-cli lib install "IRremote@4.4.1"
 
     - name: Compile sketch for ${{ matrix.board.name }}
       run: |

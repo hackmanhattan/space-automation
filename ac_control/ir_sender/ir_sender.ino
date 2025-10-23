@@ -1,4 +1,4 @@
-#include <IRremote.hpp> // IRremote 4.1.2 from Library Manager
+#include <IRremote.hpp> // IRremote 4.4.1 from Library Manager
 
 // PIR motion sensor configuration
 #define PIR_PIN 2  // GPIO pin connected to PIR sensor output

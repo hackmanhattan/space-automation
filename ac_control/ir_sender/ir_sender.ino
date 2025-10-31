@@ -20,6 +20,7 @@ void setup() {
 void loop() {
   // due to unsigned math being modulo, this period math still works when it wraps around after 50 days
   if ((unsigned long)(millis() - last_trigger) > period) {
+    Serial.println("turning off");
     IrSender.sendRaw(off_code, sizeof(off_code)/sizeof(off_code[0]), 38);
     last_trigger = millis();
   }

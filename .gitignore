@@ -1,0 +1,3 @@
+/camlog/data
+*.pyc
+camlog/cam_config.py

@@ -1,3 +1,8 @@
+// IR code-capture tool (not deployed). Point the AC's own remote at an IR
+// receiver module on RECV_PIN, run this, and press a button: it decodes the
+// signal and dumps the raw timing over Serial in a sendRaw()-ready format.
+// Paste the captured array into ir_sender.ino's on_code/temp_code/off_code.
+// Run only when the AC's IR codes need to be (re)learned.
 #define sprint Serial.print
 #define sprintln Serial.println
 #include <IRremote.hpp> // IRremote 4.4.1 from Library Manager

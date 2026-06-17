@@ -1,11 +1,37 @@
 #include <IRremote.hpp> // IRremote 4.4.1 from Library Manager
+#include <Adafruit_DotStar.h>
 
 // PIR motion sensor configuration
 #define PIR_PIN 2  // GPIO pin connected to PIR sensor output
 #define MOTION_TIMEOUT 3600000  // 1 hour in milliseconds (60 * 60 * 1000)
 
+// Onboard RGB status LED. The Trinket M0 has a DotStar on internal pins 7/8.
+// On boards without a DotStar (the uno/esp CI profiles) these fall back to
+// GPIO 7/8 so the sketch still compiles; the LED calls are harmless there.
+#if defined(PIN_DOTSTAR_DATA) && defined(PIN_DOTSTAR_CLK)
+  #define STATUS_DS_DATA PIN_DOTSTAR_DATA
+  #define STATUS_DS_CLK  PIN_DOTSTAR_CLK
+#else
+  #define STATUS_DS_DATA 7
+  #define STATUS_DS_CLK  8
+#endif
+#define STATUS_BRIGHTNESS 30  // 0-255; the onboard DotStar is very bright
+
+// DOTSTAR_BGR is the onboard Trinket M0 color order. If colors look swapped on
+// the bench (e.g. red shows as green), change this constant (try DOTSTAR_BRG).
+Adafruit_DotStar statusLed(1, STATUS_DS_DATA, STATUS_DS_CLK, DOTSTAR_BGR);
+
 unsigned long last_motion_time = 0;
 bool ac_is_off = false;  // Track whether we've already sent the off command
+
+// Status indicator: one helper plus a color per state.
+void statusColor(uint8_t r, uint8_t g, uint8_t b) {
+  statusLed.setPixelColor(0, r, g, b);
+  statusLed.show();
+}
+#define STATUS_MOTION()  statusColor(0, 255, 0)   // green   - motion / occupied
+#define STATUS_SENDING() statusColor(0, 0, 255)   // blue    - transmitting IR
+#define STATUS_IDLE()    statusColor(80, 0, 0)    // dim red - timed out / AC off
 
 //4467 4347 608 1542 609 493 582 1568 582 493 582 493 582 493 582 493 582 1568 582 1568 583 493 582 493 582 1570 581 1570 581 495 580 1571 580 1571 580 495 580 1571 580 1571 580 495 580 1571 580 1571 580 495 581 1571 579 1571 580 1571 580 1571 580 1571 580 1571 580 1571 580 1571 580 1571 580 1572 579 1571 580 1571 580 1571 580 1571 580 1572 579 1571 580 1572 579 496 579 1572 579 1572 579 1572 579 496 579 1572 579 1572 579 1572 580 5167 4439 4377 579 496 579 1572 579 497 578 1572 579 1572 579 1572 579 1573 578 497 578 497 578 1573 578 1573 578 497 578 497 578 1573 578 497 578 497 578 1573 578 497 578 497 578 1573 578 497 578 498 577 1573 578 498 577 498 577 498 577 498 577 498 577 498 577 498 577 499 576 522 553 522 554 522 553 522 553 522 553 522 553 522 553 522 553 522 553 1598 553 522 553 522 554 522 553 1598 553 522 553 522 553 522 553
 uint16_t on_code[199] = {0x1173, 0x10fb, 0x260, 0x606, 0x261, 0x1ed, 0x246, 0x620, 0x246, 0x1ed, 0x246, 0x1ed, 0x246, 0x1ed, 0x246, 0x1ed, 0x246, 0x620, 0x246, 0x620, 0x247, 0x1ed, 0x246, 0x1ed, 0x246, 0x622, 0x245, 0x622, 0x245, 0x1ef, 0x244, 0x623, 0x244, 0x623, 0x244, 0x1ef, 0x244, 0x623, 0x244, 0x623, 0x244, 0x1ef, 0x244, 0x623, 0x244, 0x623, 0x244, 0x1ef, 0x245, 0x623, 0x243, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x624, 0x243, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x623, 0x244, 0x624, 0x243, 0x623, 0x244, 0x624, 0x243, 0x1f0, 0x243, 0x624, 0x243, 0x624, 0x243, 0x624, 0x243, 0x1f0, 0x243, 0x624, 0x243, 0x624, 0x243, 0x624, 0x244, 0x142f, 0x1157, 0x1119, 0x243, 0x1f0, 0x243, 0x624, 0x243, 0x1f1, 0x242, 0x624, 0x243, 0x624, 0x243, 0x624, 0x243, 0x625, 0x242, 0x1f1, 0x242, 0x1f1, 0x242, 0x625, 0x242, 0x625, 0x242, 0x1f1, 0x242, 0x1f1, 0x242, 0x625, 0x242, 0x1f1, 0x242, 0x1f1, 0x242, 0x625, 0x242, 0x1f1, 0x242, 0x1f1, 0x242, 0x625, 0x242, 0x1f1, 0x242, 0x1f2, 0x241, 0x625, 0x242, 0x1f2, 0x241, 0x1f2, 0x241, 0x1f2, 0x241, 0x1f2, 0x241, 0x1f2, 0x241, 0x1f2, 0x241, 0x1f2, 0x241, 0x1f3, 0x240, 0x20a, 0x229, 0x20a, 0x22a, 0x20a, 0x229, 0x20a, 0x229, 0x20a, 0x229, 0x20a, 0x229, 0x20a, 0x229, 0x20a, 0x229, 0x20a, 0x229, 0x63e, 0x229, 0x20a, 0x229, 0x20a, 0x22a, 0x20a, 0x229, 0x63e, 0x229, 0x20a, 0x229, 0x20a, 0x229, 0x20a, 0x229};
@@ -19,12 +45,17 @@ void setup() {
   Serial.begin(9600);
   IrSender.begin(1);
 
+  statusLed.begin();
+  statusLed.setBrightness(STATUS_BRIGHTNESS);
+
   // Initialize with current time - assume there's motion at startup
   last_motion_time = millis();
 
   // Send initial off code as before
+  STATUS_SENDING();
   IrSender.sendRaw(off_code, sizeof(off_code)/sizeof(off_code[0]), 38);
   ac_is_off = true;
+  STATUS_IDLE();
 
   Serial.println("AC IR Sender with PIR Motion Sensor initialized");
   Serial.print("Motion timeout: ");
@@ -39,6 +70,7 @@ void loop() {
   // If motion is detected, update the last motion time and reset AC off flag
   if (motion_detected == HIGH) {
     last_motion_time = millis();
+    STATUS_MOTION();  // green while motion is present / room occupied
     if (ac_is_off) {
       Serial.println("Motion detected! AC can be turned off again after timeout.");
       ac_is_off = false;  // Reset flag so we can turn off AC again after timeout
@@ -55,8 +87,10 @@ void loop() {
     Serial.print(MOTION_TIMEOUT / 1000);
     Serial.println(" seconds. Sending AC OFF command.");
 
+    STATUS_SENDING();
     IrSender.sendRaw(off_code, sizeof(off_code)/sizeof(off_code[0]), 38);
     ac_is_off = true;
+    STATUS_IDLE();
 
     Serial.println("AC OFF command sent.");
   }

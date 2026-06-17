@@ -21,6 +21,13 @@ jobs:
           - uno
           - esp8266
           - esp32
+          - trinket
+        # Only the sender runs on the Trinket M0; the receiver has no trinket profile.
+        exclude:
+          - sketch:
+              path: ac_control/ir_receiver
+              name: ir_receiver
+            profile: trinket
 
     steps:
     - name: Checkout repository
